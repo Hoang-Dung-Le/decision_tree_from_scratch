@@ -7,6 +7,8 @@ class DecisionTreeC45Entropy:
         self.attribute_name_dict = attribute_name_dict
         self.step = []
         self.continuous_attributes = continuous_attributes
+        self.test_case = {}
+        self.test = {}
 
     class Node:
         def __init__(self, attribute=None, threshold=None, label=None):
@@ -68,11 +70,16 @@ class DecisionTreeC45Entropy:
             subset_y = y[subset_indices]
             subset_entropy += (len(subset_y) / len(y)) * self.entropy(subset_y, value, threshold=threshold)
         if threshold is None:
-          stp_if = "Entropy của thuộc tính " + str(attribute) + " :" + str(round(subset_entropy,2))
+          stp_if = "Entropy của thuộc tính " + str(self.attribute_name_dict.get(attribute)) + " :" + str(round(subset_entropy,2))
           self.step.append(stp_if)
+          name = "Entropy " + str(self.attribute_name_dict.get(attribute))
+          self.test_case.update({name : round(subset_entropy,2)})
         else:
           stp_if = "Entropy của thuộc tính " + str(threshold) + " :" + str(round(subset_entropy,2))
           self.step.append(stp_if)
+          name = "Entropy " + str(self.attribute_name_dict.get(attribute)) + ": " + str(threshold)
+          self.test_case.update({name:round(subset_entropy,2)})
+
 
         return self.entropy(y, value,pr=False, threshold=threshold) - subset_entropy
 
@@ -113,10 +120,14 @@ class DecisionTreeC45Entropy:
         # print("Best Attribute:", best_attribute)  # In best attribute
         step_best_attribute = "Chọn thuộc tính: " + str(self.attribute_name_dict.get(best_attribute))
         self.step.append(step_best_attribute)
+        self.test_case.update({"Chọn " : str(self.attribute_name_dict.get(best_attribute))})
+        self.test.update({self.buoc : self.test_case})
+        self.test_case = {}
         self.buoc += 1
         return best_attribute, best_threshold
 
-    def create_decision_tree(self, X, y, used_attributes=None):
+    def create_decision_tree(self, X, y, used_attributes=None, value=None):
+        # self.test_case.update({"pre":value})
         if len(set(y)) == 1:
             # Nếu tất cả các nhãn giống nhau, tạo nút lá
             return self.Node(label=y[0])
@@ -154,7 +165,7 @@ class DecisionTreeC45Entropy:
                     most_common_label = Counter(y).most_common(1)[0][0]
                     node.add_child(value, self.Node(label=most_common_label))
                 else:
-                    node.add_child(value, self.create_decision_tree(subset_X, subset_y, used_attributes))
+                    node.add_child(value, self.create_decision_tree(subset_X, subset_y, used_attributes, value=value))
         else:
             values = set(X[:, best_attribute])
             for value in values:
@@ -167,10 +178,12 @@ class DecisionTreeC45Entropy:
                     most_common_label = Counter(y).most_common(1)[0][0]
                     node.add_child(value, self.Node(label=most_common_label))
                 else:
-                    node.add_child(value, self.create_decision_tree(subset_X, subset_y, used_attributes))
+                    node.add_child(value, self.create_decision_tree(subset_X, subset_y, used_attributes, value=value))
         return node
 
     def predict_samples(self, X, tree):
         return [tree.predict(sample) for sample in X]
     def get_step(self):
         return self.step
+    def get_pratice(self):
+        return self.test

@@ -1,0 +1,163 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              clifford: "#da373d",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="h-screen flex items-center justify-center flex-col">
+    <form action="" class="max-w-[550px] w-full p-5 border-2 rounded-2xl">
+      <h2 class="text-center text-3xl font-semibold">Đăng nhập</h2>
+      <div class="mb-6">
+        <label
+          for="username"
+          class="block mb-2 text-sm font-medium text-gray-900"
+          >Username</label
+        >
+        <input
+          type="text"
+          id="username"
+          class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          placeholder="name@flowbite.com"
+          required
+        />
+      </div>
+      <div class="mb-6">
+        <label
+          for="password"
+          class="block mb-2 text-sm font-medium text-gray-900"
+          >Your password</label
+        >
+        <input
+          type="password"
+          id="password"
+          class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          required
+          placeholder="Vui lòng nhập mật khẩu!!"
+        />
+      </div>
+      <button
+        type="submit"
+        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full px-5 py-2.5 text-center"
+      >
+        Đăng nhập
+      </button>
+      <div class="mt-5">
+        <a href="./index.html" class="text-blue-500 font-semibold underline">
+          Quay lại trang hướng dẫn
+        </a>
+      </div>
+    </form>
+  </body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              clifford: "#da373d",
+            },
+          },
+        },
+      };
+
+      async function handleLoginFormSubmit(event) {
+        event.preventDefault();
+
+        const username = String(document.getElementById("username").value);
+        const password = String(document.getElementById("password").value);
+
+        try {
+          const response = await axios.post("http://localhost:8000/login", {
+            user_name: username,
+            password: password,
+          }, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }});
+
+          if (response.status === 200) {
+            if (response.data.message === "ok") {
+              window.location.href = "admin.html";
+            } else {
+              alert("Tên tài khoản hoặc mật khẩu không đúng!");
+            }
+          } else {
+            alert("Đã xảy ra lỗi khi gửi yêu cầu đăng nhập!");
+          }
+        } catch (error) {
+          alert("Đã xảy ra lỗi khi gửi yêu cầu đăng nhập!");
+        }
+      }
+    </script>
+  </head>
+  <body class="h-screen flex items-center justify-center flex-col">
+    <form
+      onsubmit="handleLoginFormSubmit(event)"
+      class="max-w-[550px] w-full p-5 border-2 rounded-2xl"
+    >
+      <h2 class="text-center text-3xl font-semibold">Đăng nhập</h2>
+      <div class="mb-6">
+        <label
+          for="username"
+          class="block mb-2 text-sm font-medium text-gray-900"
+          >Username</label
+        >
+        <input
+          type="text"
+          id="username"
+          class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          placeholder="name@flowbite.com"
+          required
+        />
+      </div>
+      <div class="mb-6">
+        <label
+          for="password"
+          class="block mb-2 text-sm font-medium text-gray-900"
+          >Your password</label
+        >
+        <input
+          type="password"
+          id="password"
+          class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          required
+          placeholder="Vui lòng nhập mật khẩu!!"
+        />
+      </div>
+      <button
+        type="submit"
+        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full px-5 py-2.5 text-center"
+      >
+        Đăng nhập
+      </button>
+      <div class="mt-5">
+        <a href="./index.html" class="text-blue-500 font-semibold underline">
+          Quay lại trang hướng dẫn
+        </a>
+      </div>
+    </form>
+  </body>
+</html>
+

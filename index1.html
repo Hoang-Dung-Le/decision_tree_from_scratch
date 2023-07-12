@@ -4,7 +4,107 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/gojs/release/go.js"></script>
     <title>Hiển thị CSV dưới dạng bảng</title>
-    <link rel="stylesheet" href="./assets/styles/style_pratice.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-image: url('background.jpg');
+            background-size: cover;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .table-container {
+            margin-top: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .upload-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .upload-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            fill: #666;
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        .upload-label {
+            padding: 8px 12px;
+            background-color: #ccc;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .upload-label:hover {
+            background-color: #999;
+        }
+
+        .dropdown {
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .dropdown select {
+            padding: 5px;
+        }
+
+        .submit-button {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .submit-button:hover {
+            background-color: #45a049;
+        }
+
+        #myDiagramDiv {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -21,18 +121,12 @@
         <div class="table-container" id="tableContainer"></div>
         <button id="submitButton" class="submit-button">Gửi</button>
     </div>
-    <div class="tree">
-        <div class="step"></div>
-        <div class="container" id="myDiagramDiv"></div>
-    </div>
+
+    <div class="container" id="myDiagramDiv"></div>
+
     <script>
         document.getElementById('csvFileInput').addEventListener('change', handleFileSelect, false);
         document.getElementById('submitButton').addEventListener('click', handleSubmit, false);
-    
-
-
-
-
 
         let csvData = null;
         let file = null;
@@ -78,7 +172,7 @@
   table.appendChild(headingRow);
 
   // Add table rows (maximum 5 rows)
-  const maxRows = Math.min(lines.length - 1, 20); // Maximum 5 rows
+  const maxRows = Math.min(lines.length - 1, 5); // Maximum 5 rows
   for (let i = 1; i <= maxRows; i++) {
     const row = document.createElement('tr');
     const cells = lines[i].split(',');
@@ -125,7 +219,6 @@
             const table = document.querySelector('table');
             const rows = table.querySelectorAll('tr');
             const headers = rows[0].querySelectorAll('th');
-            var divElement = document.querySelector('.step');
 
             const cellValues = [];
             for (let i = 0; i < headers.length; i++) {
@@ -161,23 +254,6 @@
                     if (response.data['error'] == 'yes'){
                         alert("Có lỗi xảy ra, hãy kiểm tra lại dữ liệu và đảm bảo không có dữ liệu thiếu")
                     } else {
-                        steps = response.data['steps'];
-           
-                        [...steps].forEach(function(element, index) {
-                            var spanElement = document.createElement('p'); // Tạo thẻ span mới
-                            if (element.includes("Bước")) {
-                                spanElement.classList.add('bold'); // Thêm lớp "bold" cho thẻ span
-                                }
-                            spanElement.innerText = element; // Đặt nội dung cho thẻ span
-                        
-
-                            divElement.appendChild(spanElement)
-                            ;
-                            // if (index !== steps.length - 1) {
-                            //     var brElement = document.createElement('br'); // Tạo thẻ br mới
-                            //     divElement.appendChild(brElement); // Thêm thẻ br vào thẻ div
-                            // } // Thêm thẻ span vào thẻ div
-                        });
                         init();
                         drawTree(response.data);
                     }
@@ -218,12 +294,10 @@
 
       // Định nghĩa mẫu liên kết để có nhãn trên đường đi
       myDiagram.linkTemplate =
-  $(go.Link,
-    $(go.Shape),                           // this is the link shape (the line)
-    $(go.Shape, { toArrow: "Standard" }),  // this is an arrowhead
-    $(go.TextBlock,                        // this is a Link label
-      new go.Binding("text", "label"))
-  );
+        $(go.Link,
+        $(go.Shape, { toArrow: "Standard" }), // Thêm mũi tên vào đầu dẫn
+        $(go.TextBlock, { segmentOffset: new go.Point(0, -10) }, new go.Binding("text", "label"))
+      );
 
         fileInput.addEventListener('change', handleFileSelect);
     }
@@ -244,6 +318,7 @@
               } 
         }
       for(let i = 1; i < tree.length; i++){
+        // console.log(tree[i]['parent'])
         if (tree[i]['label'] !== null){
           
           linkDataArray.push({ from: tree[i]['parent'], to: i, visible: true, label: tree[i]['order']})
@@ -252,7 +327,7 @@
         } 
       }
 
-    //   console.log(nodeDataArray)
+      console.log(nodeDataArray)
       
       return { nodeDataArray, linkDataArray };
     }

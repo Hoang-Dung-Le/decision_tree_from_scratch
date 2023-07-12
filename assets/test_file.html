@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Viewer</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <table id="csvTable"></table>
+
+    <script>
+        const csvUrl = "http://localhost:8000/public/datasets/weather.txt";
+
+        fetch(csvUrl)
+            .then(response => response.text())
+            .then(csvData => {
+                const rows = csvData.split("\n");
+                const table = document.getElementById("csvTable");
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = document.createElement("tr");
+                    const columns = rows[i].split(",");
+
+                    for (let j = 0; j < columns.length; j++) {
+                        const cell = document.createElement(i === 0 ? "th" : "td");
+                        cell.textContent = columns[j];
+                        row.appendChild(cell);
+                    }
+
+                    table.appendChild(row);
+                }
+            })
+            .catch(error => console.error(error));
+    </script>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tập dữ liệu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f1f1f1;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        #quiz {
+            margin: 0 auto;
+            max-width: 500px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .question {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button-container button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .correct {
+            color: green;
+        }
+
+        .incorrect {
+            color: red;
+        }
+
+        .dataset-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .dataset-container a {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .answers-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .answers-container button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .answers-container button:hover {
+            background-color: #45a049;
+        }
+
+        @media (max-width: 600px) {
+            #quiz {
+                padding: 10px;
+            }
+
+            input[type="text"] {
+                padding: 5px;
+                font-size: 14px;
+            }
+        }
+
+        table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    </style>
+</head>
+<body>
+    <h1>Tập dữ liệu</h1>
+    <table id="csvTable"></table>
+    <div id="quiz"></div>
+    <div class="button-container">
+        <button onclick="submitAnswers()">Submit</button>
+        <button onclick="viewAnswers()">Xem đáp án</button>
+    </div>
+    <div id="result" class="result"></div>
+    <div id="answers" class="answers-container"></div>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        var datasetLink = '';
+        var questions = [];
+        var ans = []
+
+        // Lấy dữ liệu từ API
+        fetch('http://localhost:8000/test_case')
+            .then(response => response.json())
+            .then(data => {
+                generateQuiz(data['message']);
+                drawTable(data['link_dataset'])
+            });
+            
+        // Hàm tạo câu hỏi và ghi vào #quiz
+        function generateQuiz(data) {
+            var quizContainer = document.getElementById('quiz');
+            questions = Object.keys(data);
+            ans = Object.values(data)
+            // console.log(questions)
+
+            questions.forEach(function (question) {
+                var questionElement = document.createElement('div');
+                questionElement.className = 'question';
+                questionElement.innerHTML = '<label>' + question + '</label>';
+
+                var inputElement = document.createElement('input');
+                inputElement.type = 'text';
+                questionElement.appendChild(inputElement);
+
+                quizContainer.appendChild(questionElement);
+            });
+        }
+
+        // Hiển thị link dataset
+        function showDatasetLink(data) {
+            if (data.hasOwnProperty('link_dataset')) {
+                datasetLink = data.link_dataset;
+                var datasetLinkElement = document.getElementById('dataset-link');
+                datasetLinkElement.href = datasetLink;
+            }
+        }
+
+        // Hàm kiểm tra câu trả lời và hiển thị kết quả
+        function submitAnswers() {
+            var correctCount = 0;
+
+            for (var i = 0; i < questions.length; i++) {
+                var questionElement = document.getElementsByClassName('question')[i];
+                var input = questionElement.getElementsByTagName('input')[0];
+                var userAnswer = input.value.trim();
+                var correctAnswer = questions[i];
+                ans[i] = correctAnswer
+
+                if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                    input.className = 'correct';
+                    correctCount++;
+                } else {
+                    input.className = 'incorrect';
+                }
+
+                input.disabled = true;
+            }
+
+            var resultElement = document.getElementById('result');
+            resultElement.textContent = 'Đúng: ' + correctCount + ' / ' + questions.length;
+        }
+
+        // Hàm hiển thị đáp án
+        function viewAnswers() {
+            var answersContainer = document.getElementById('answers');
+            answersContainer.innerHTML = '';
+            for (let i = 0; i < ans.length - 1; i++){
+                console.log(ans[i])
+            }
+
+            for (var i = 0; i < ans.length; i++) {
+                var questionElement = document.getElementsByClassName('question')[i];
+                var userAnswer = questionElement.getElementsByTagName('input')[0].value.trim();
+                var corAns = ans[i];
+
+                var answerElement = document.createElement('div');
+                answerElement.textContent = 'Đáp án ' + String(i + 1) + " :" + corAns;
+                if (userAnswer.toLowerCase() === String(corAns).toLowerCase) {
+                    answerElement.className = 'correct';
+                } else {
+                    answerElement.className = 'incorrect';
+                }
+    
+                answersContainer.appendChild(answerElement);
+            }
+        }
+
+        function drawTable(csvUrl){
+                console.log(csvUrl)
+                const table = d3.select("#csvTable");
+
+                d3.csv(csvUrl).then(function(data) {
+                const columns = Object.keys(data[0]);
+                
+                table.append("thead")
+                    .append("tr")
+                    .selectAll("th")
+                    .data(columns)
+                    .enter()
+                    .append("th")
+                    .text(function(d) { return d; });
+
+                table.append("tbody")
+                    .selectAll("tr")
+                    .data(data)
+                    .enter()
+                    .append("tr")
+                    .selectAll("td")
+                    .data(function(row) {
+                    return columns.map(function(column) {
+                        return { column: column, value: row[column] };
+                    });
+                    })
+                    .enter()
+                    .append("td")
+                    .text(function(d) { return d.value; });
+                    });
+        }
+    </script>
+</body>
+</html>

@@ -25,14 +25,14 @@
         <div class="step"></div>
         <div class="container" id="myDiagramDiv"></div>
     </div>
+    <button id="okButton" class="ok-button">OK</button>
     <script>
         document.getElementById('csvFileInput').addEventListener('change', handleFileSelect, false);
         document.getElementById('submitButton').addEventListener('click', handleSubmit, false);
-    
-
-
-
-
+        const okButton = document.getElementById('okButton');
+            okButton.addEventListener('click', () => {
+                window.location.href = 'admin.html';
+            });
 
         let csvData = null;
         let file = null;
@@ -152,7 +152,7 @@
             formData.append('file', file);
             formData.append('conti_attribute', continuous_attributes.toString());
             // console.log(continuous_attributes)
-            axios.post('http://localhost:8000/decision-tree-c45', formData, {
+            axios.post('http://localhost:8000/upload_file', formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },

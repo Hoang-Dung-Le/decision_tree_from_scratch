@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Danh sách file</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .file-list {
+      max-width: 600px;
+      margin-bottom: 20px;
+    }
+
+    .file-list ul {
+      list-style-type: none;
+      padding: 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+    }
+
+    .file-list li {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .file-list li:last-child {
+      border-bottom: none;
+    }
+
+    .file-list li .filename {
+      flex-grow: 1;
+      margin-right: 10px;
+    }
+
+    .file-list li button {
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      background-color: #dc3545;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .file-list li button:hover {
+      background-color: #c82333;
+    }
+
+    .message {
+      color: #dc3545;
+      margin-bottom: 10px;
+    }
+
+    .upload-button {
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .upload-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Danh sách file</h1>
+  <div class="file-list">
+    <ul id="file-list"></ul>
+  </div>
+
+  <div class="message" id="message"></div>
+
+  <button class="upload-button" onclick="redirectToUploadPage()">Upload file mới</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    function redirectToUploadPage() {
+  window.location.href = "upload_files.html";
+}
+    // Hàm này sẽ gửi yêu cầu xoá file đến server
+    function deleteFile(filename) {
+      axios.post('http://localhost:8000/del_file', { filename: filename })
+        .then(response => {
+          // Kiểm tra phản hồi từ server và cập nhật danh sách file nếu thành công
+          if (response.data.success) {
+            showMessage('File đã được xoá thành công.', 'success');
+            fetchFileList();
+          } else {
+            showMessage('Lỗi khi xoá file: ' + response.data.error, 'error');
+          }
+        })
+        .catch(error => {
+          showMessage('Lỗi kết nối server: ' + error, 'error');
+        });
+    }
+
+    // Hàm này sẽ gửi yêu cầu lấy danh sách file từ server
+    function fetchFileList() {
+      axios.get('http://localhost:8000/get_datasets')
+        .then(response => {
+          const data = response.data;
+
+          // Xóa danh sách file hiện tại
+          const fileList = document.getElementById('file-list');
+          fileList.innerHTML = '';
+
+          // Tạo các phần tử li và nút xoá tương ứng với mỗi file
+          data['message'].forEach(filename => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+              <span class="filename">${filename}</span>
+              <button class="delete-button">Xoá</button>
+            `;
+
+            const deleteButton = listItem.querySelector('.delete-button');
+            deleteButton.addEventListener('click', () => {
+              deleteFile(filename);
+            });
+
+            fileList.appendChild(listItem);
+          });
+
+          showMessage('', 'none');
+        })
+        .catch(error => {
+          showMessage('Lỗi kết nối server: ' + error, 'error');
+        });
+    }
+
+    // Hàm này hiển thị thông báo cho người dùng
+    function showMessage(message, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = message;
+      messageDiv.style.display = type === 'none' ? 'none' : 'block';
+      messageDiv.style.color = type === 'error' ? '#dc3545' : '#28a745';
+    }
+
+    // Gọi hàm fetchFileList để lấy danh sách file khi trang web được tải
+    fetchFileList();
+  </script>
+</body>
+</html>
