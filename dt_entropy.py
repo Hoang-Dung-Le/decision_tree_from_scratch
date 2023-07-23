@@ -92,7 +92,7 @@ class DecisionTreeC45Entropy:
         # print("Buoc: ", self.buoc)
         # print("Tính gini cho các thuộc tính: ", attrs)
         step_buoc = "Bước " + str(self.buoc)
-        step_gini = "Tính gini cho các thuộc tính: " + str(attrs)
+        step_gini = "Tính entropy cho các thuộc tính: " + str(attrs)
         self.step.append(step_buoc)
         self.step.append(step_gini)
         best_gain = 0
