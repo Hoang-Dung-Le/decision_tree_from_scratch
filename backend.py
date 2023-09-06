@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated, List
 import numpy as np
 from dt_entropy import DecisionTreeC45Entropy
+from dt_gini import DecisionTreeGiniIndex
 from fastapi import HTTPException
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -92,24 +93,24 @@ app.add_middleware(
 app.mount("/public", StaticFiles(directory="assets/public"), name="static")
 
 
-db = mysql.connector.connect(
-    host="localhost",
-    port=3307,
-    user="root",
-    password="",
-    database="dt_web"
-)
+# db = mysql.connector.connect(
+#     host="localhost",
+#     port=3307,
+#     user="root",
+#     password="",
+#     database="dt_web"
+# )
 
-def login_check(username, password):
-    cursor = db.cursor()
-    query = "SELECT user_name FROM user WHERE user_name = %s and password = %s"
-    cursor.execute(query, (username, password,))
-    user = cursor.fetchone()
-    cursor.close()
-    if user:
-        return True
-    else:
-        return False
+# def login_check(username, password):
+#     cursor = db.cursor()
+#     query = "SELECT user_name FROM user WHERE user_name = %s and password = %s"
+#     cursor.execute(query, (username, password,))
+#     user = cursor.fetchone()
+#     cursor.close()
+#     if user:
+#         return True
+#     else:
+#         return False
 
 
 def add_to_arr(arr, json_tree):
@@ -125,7 +126,7 @@ def add_to_arr(arr, json_tree):
 
 
 @app.post("/decision-tree-c45")
-async def decision_tree_c45(file: Annotated[UploadFile, Form()], conti_attribute: Annotated[str, Form()]):
+async def decision_tree_c45(file: Annotated[UploadFile, Form()], conti_attribute: Annotated[str, Form()], type: Annotated[str, Form()]):
     if file is None:
         return {"message": "No file received"}
     # Read the CSV file into a DataFrame
@@ -153,121 +154,138 @@ async def decision_tree_c45(file: Annotated[UploadFile, Form()], conti_attribute
         # Tách thuộc tính và nhãn
         X = data_np[:, :-1]  # Thuộc tính
         y = data_np[:, -1]  # Nhãn
-
+        if type == 'Entropy':
         # Tạo cây quyết định
-        tree = DecisionTreeC45Entropy(attribute_name_dict, continuous_attributes)
-        decision_tree = tree.create_decision_tree(X, y)
-        decision_tree_dict = decision_tree_to_dict(decision_tree, attribute_name_dict)
-        
-        arr = []
-        add_to_arr(arr,decision_tree_dict)
-        steps = tree.get_step()
-        # print(steps)
-        # print(decision_tree_dict)
-        print(tree.get_pratice())
-        return {"message":arr,
-                "steps":steps,
-                "error":"no"}
-    except:
-        return {"error":"yes"}
-    
-@app.post('/login')
-def login(user_name: Annotated[str, Form()], password: Annotated[str, Form()]):
-    print(user_name, password)
-    result = login_check(username=user_name, password=password)
-    if result:
-        return {"message": "ok"}
-    return {"message":"fail"}
-
-@app.get('/get_datasets')
-def get_datasets():
-    cursor = db.cursor()
-    query = "SELECT name FROM list_datasets"
-    cursor.execute(query, ())
-    list_datasets = cursor.fetchall()
-    cursor.close()
-    # print(list_datasets)
-    return {"message":list_datasets}
-
-
-@app.post("/upload_file")
-async def uploadFile(file: Annotated[UploadFile, Form()], conti_attribute: Annotated[str, Form()]):
-    if file is None:
-        return {"message": "No file received"}
-    # Read the CSV file into a DataFrame
-    # print(conti_attribute)
-
-    try:
-        global continuous_attributes
-        if conti_attribute == 'empty':
-            continuous_attributes = set()
+            tree = DecisionTreeC45Entropy(attribute_name_dict, continuous_attributes)
+            decision_tree = tree.create_decision_tree(X, y)
+            decision_tree_dict = decision_tree_to_dict(decision_tree, attribute_name_dict)
+            
+            arr = []
+            add_to_arr(arr,decision_tree_dict)
+            steps = tree.get_step()
+            # print(steps)
+            # print(decision_tree_dict)
+            print(tree.get_pratice())
+            return {"message":arr,
+                    "steps":steps,
+                    "error":"no"}
         else:
-            continuous_attributes = [int(num) for num in conti_attribute.split(",")]
-        # print(continuous_attributes)
-        data = pd.read_csv(file.file)
-        # print(data.head())
-        attribute_name = data.columns.values.tolist()
-        attribute_name_dict = {}
-        for i in range(len(attribute_name) - 1):
-            attribute_name_dict.update({i: attribute_name[i]})
-        # print(attribute_name_dict)
-        # data = data.iloc[1:]
-
-        # Chuyển đổi dữ liệu thành mảng numpy
-        data_np = np.array(data)
-
-        # Tách thuộc tính và nhãn
-        X = data_np[:, :-1]  # Thuộc tính
-        y = data_np[:, -1]  # Nhãn
-
-        # Tạo cây quyết định
-        tree = DecisionTreeC45Entropy(attribute_name_dict, continuous_attributes)
-        decision_tree = tree.create_decision_tree(X, y)
-        decision_tree_dict = decision_tree_to_dict(decision_tree, attribute_name_dict)
-        
-        arr = []
-        add_to_arr(arr,decision_tree_dict)
-        steps = tree.get_step()
-        # print(steps)
-        # print(decision_tree_dict)
-        # print(tree.get_pratice())
-        test_case = tree.get_pratice()
-        file_path = os.path.join(UPLOAD_DIR, file.filename)
-        file_name, file_extension = os.path.splitext(file_path)
-        file_path_txt = file_name + ".txt"
-        with open(file_path_txt, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        file_name = str(uuid.uuid4()) + '.json'
-        file_path = os.path.join(UPLOAD_DIR_JSON, file_name)
-        with open(file_path, 'w', encoding='utf-8') as json_file:
-            json.dump(test_case, json_file, ensure_ascii=False)
-        cursor = db.cursor()
-        query = "INSERT INTO list_datasets (name, url, url_json) values(%s, %s, %s)"
-        cursor.execute(query, (file_path_txt, file_path_txt, file_name))
-        db.commit(   )
-        return {"message":arr,
-                "steps":steps,
-                "error":"no"}
+            tree = DecisionTreeGiniIndex(attribute_name_dict, continuous_attributes)
+            decision_tree = tree.create_decision_tree(X, y)
+            decision_tree_dict = decision_tree_to_dict(decision_tree, attribute_name_dict)
+            
+            arr = []
+            add_to_arr(arr,decision_tree_dict)
+            steps = tree.get_step()
+            # print(steps)
+            # print(decision_tree_dict)
+            print(tree.get_pratice())
+            return {"message":arr,
+                    "steps":steps,
+                    "error":"no"}
     except:
         return {"error":"yes"}
     
+# @app.post('/login')
+# def login(user_name: Annotated[str, Form()], password: Annotated[str, Form()]):
+#     print(user_name, password)
+#     result = login_check(username=user_name, password=password)
+#     if result:
+#         return {"message": "ok"}
+#     return {"message":"fail"}
 
-@app.get('/test_case')
-def get_test_case():
-    cursor = db.cursor()
-    query = "SELECT * FROM list_datasets"
-    cursor.execute(query, ())
-    list_datasets = cursor.fetchall()
-    cursor.close()
-    random_number = random.randint(0, len(list_datasets) - 1)
-    print(list_datasets[random_number][3])
-    file_json_name = UPLOAD_DIR_JSON + "/" + str(list_datasets[random_number][3])
-    with open(file_json_name, encoding='utf-8') as json_file:
-        data = json.load(json_file)
-    # print(data)
-    link = "http://localhost:8000/public/datasets/" + str(list_datasets[random_number][2])
-    result = data.get("1")
-    return {"message": result,
-            "link_dataset":link}
+# @app.get('/get_datasets')
+# def get_datasets():
+#     cursor = db.cursor()
+#     query = "SELECT name, reliability FROM list_datasets"
+#     cursor.execute(query, ())
+#     list_datasets = cursor.fetchall()
+#     cursor.close()
+#     # print(list_datasets)
+#     return {"message":list_datasets}
+
+# @app.post('change-file')
+# def change_file()
+
+
+# @app.post("/upload_file")
+# async def uploadFile(file: Annotated[UploadFile, Form()], conti_attribute: Annotated[str, Form()]):
+#     if file is None:
+#         return {"message": "No file received"}
+#     # Read the CSV file into a DataFrame
+#     # print(conti_attribute)
+
+#     try:
+#         global continuous_attributes
+#         if conti_attribute == 'empty':
+#             continuous_attributes = set()
+#         else:
+#             continuous_attributes = [int(num) for num in conti_attribute.split(",")]
+#         # print(continuous_attributes)
+#         data = pd.read_csv(file.file)
+#         # print(data.head())
+#         attribute_name = data.columns.values.tolist()
+#         attribute_name_dict = {}
+#         for i in range(len(attribute_name) - 1):
+#             attribute_name_dict.update({i: attribute_name[i]})
+#         # print(attribute_name_dict)
+#         # data = data.iloc[1:]
+
+#         # Chuyển đổi dữ liệu thành mảng numpy
+#         data_np = np.array(data)
+
+#         # Tách thuộc tính và nhãn
+#         X = data_np[:, :-1]  # Thuộc tính
+#         y = data_np[:, -1]  # Nhãn
+
+#         # Tạo cây quyết định
+#         tree = DecisionTreeC45Entropy(attribute_name_dict, continuous_attributes)
+#         decision_tree = tree.create_decision_tree(X, y)
+#         decision_tree_dict = decision_tree_to_dict(decision_tree, attribute_name_dict)
+        
+#         arr = []
+#         add_to_arr(arr,decision_tree_dict)
+#         steps = tree.get_step()
+#         # print(steps)
+#         # print(decision_tree_dict)
+#         # print(tree.get_pratice())
+#         test_case = tree.get_pratice()
+#         file_path = os.path.join(UPLOAD_DIR, file.filename)
+#         file_name, file_extension = os.path.splitext(file_path)
+#         file_path_txt = file_name + ".txt"
+#         with open(file_path_txt, "wb") as buffer:
+#             shutil.copyfileobj(file.file, buffer)
+#         file_name = str(uuid.uuid4()) + '.json'
+#         file_path = os.path.join(UPLOAD_DIR_JSON, file_name)
+#         with open(file_path, 'w', encoding='utf-8') as json_file:
+#             json.dump(test_case, json_file, ensure_ascii=False)
+#         cursor = db.cursor()
+#         query = "INSERT INTO list_datasets (name, url, url_json) values(%s, %s, %s)"
+#         cursor.execute(query, (file_path_txt, file_path_txt, file_name))
+#         db.commit(   )
+#         return {"message":arr,
+#                 "steps":steps,
+#                 "error":"no"}
+#     except:
+#         return {"error":"yes"}
+    
+
+# @app.get('/test_case')
+# def get_test_case():
+#     cursor = db.cursor()
+#     query = "SELECT * FROM list_datasets"
+#     cursor.execute(query, ())
+#     list_datasets = cursor.fetchall()
+#     cursor.close()
+#     random_number = random.randint(0, len(list_datasets) - 1)
+#     print(list_datasets[random_number][3])
+#     file_json_name = UPLOAD_DIR_JSON + "/" + str(list_datasets[random_number][3])
+#     with open(file_json_name, encoding='utf-8') as json_file:
+#         data = json.load(json_file)
+#     # print(data)
+#     link = "http://localhost:8000/public/datasets/" + str(list_datasets[random_number][2])
+#     result = data.get("1")
+#     return {"message": result,
+#             "link_dataset":link}
 
 

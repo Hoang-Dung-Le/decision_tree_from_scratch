@@ -75,6 +75,7 @@
     .upload-button:hover {
       background-color: #0056b3;
     }
+
   </style>
 </head>
 <body>
@@ -109,6 +110,22 @@
         });
     }
 
+    function changeFile(filename){
+      axios.post('http://localhost:8000/change-file', { filename: filename, tincay: tincay })
+        .then(response => {
+          // Kiểm tra phản hồi từ server và cập nhật danh sách file nếu thành công
+          if (response.data.success) {
+            showMessage('Đã thay đổi thành công.', 'success');
+            fetchFileList();
+          } else {
+            showMessage('Lỗi khi thay đổi độ tin cậy: ' + response.data.error, 'error');
+          }
+        })
+        .catch(error => {
+          showMessage('Lỗi kết nối server: ' + error, 'error');
+        });
+    }
+
     // Hàm này sẽ gửi yêu cầu lấy danh sách file từ server
     function fetchFileList() {
       axios.get('http://localhost:8000/get_datasets')
@@ -123,14 +140,21 @@
           data['message'].forEach(filename => {
             const listItem = document.createElement('li');
             listItem.innerHTML = `
-              <span class="filename">${filename}</span>
+              <span class="filename">${filename[0]}</span>
+              <input style="width: 70px;" type="number" min="0" step="0.01" value="${filename[1]}">
+              <button style="margin-left: 10px; margin-right: 10px; background-color: blue;" class="change-button" >Thay đổi</button>
               <button class="delete-button">Xoá</button>
             `;
 
             const deleteButton = listItem.querySelector('.delete-button');
             deleteButton.addEventListener('click', () => {
-              deleteFile(filename);
+              deleteFile(filename[0]);
             });
+
+            const changeButton = listItem.querySelector('.change-button');
+            changeButton.addEventListener('click', ()=>{
+              changeFile(filename[0])
+            })
 
             fileList.appendChild(listItem);
           });
