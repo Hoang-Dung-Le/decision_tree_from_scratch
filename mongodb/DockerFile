@@ -1,0 +1,10 @@
+FROM mongo:latest
+
+# Tạo thư mục để lưu trữ dữ liệu
+WORKDIR /data/db
+
+# Chạy MongoDB
+CMD ["mongod"]
+
+# Expose cổng 27017
+EXPOSE 27017

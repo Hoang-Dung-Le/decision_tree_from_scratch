@@ -138,9 +138,10 @@
 
           // Tạo các phần tử li và nút xoá tương ứng với mỗi file
           data['message'].forEach(filename => {
+            console.log(filename)
             const listItem = document.createElement('li');
             listItem.innerHTML = `
-              <span class="filename">${filename[0]}</span>
+              <span class="filename">${filename['name']}</span>
               <input style="width: 70px;" type="number" min="0" step="0.01" value="${filename[1]}">
               <button style="margin-left: 10px; margin-right: 10px; background-color: blue;" class="change-button" >Thay đổi</button>
               <button class="delete-button">Xoá</button>

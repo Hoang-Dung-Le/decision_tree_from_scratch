@@ -1,25 +1,27 @@
-# For more information, please refer to https://aka.ms/vscode-docker-python
-FROM python:3.10-slim
+FROM python:3.9
 
-EXPOSE 8000
+# Set the working directory to /code
+WORKDIR /code
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
+# Copy the current directory contents into the container at /code
+COPY ./requirements.txt /code/requirements.txt
 
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
+# Install requirements.txt 
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-# Install pip requirements
-COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
+# Set up a new user named "user" with user ID 1000
+RUN useradd -m -u 1000 user
+# Switch to the "user" user
+USER user
+# Set home to the user's home directory
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
 
-WORKDIR /app
-COPY . /app
+# Set the working directory to the user's home directory
+WORKDIR $HOME/app
 
-# Creates a non-root user with an explicit UID and adds permission to access the /app folder
-# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
-USER appuser
+# Copy the current directory contents into the container at $HOME/app setting the owner to the user
+COPY --chown=user . $HOME/app
 
-# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker", "backend:app"]
+# Start the FastAPI app on port 7860, the default port expected by Spaces
+CMD ["uvicorn", "backend:app", "--host", "0.0.0.0", "--port", "8000"]
