@@ -68,6 +68,9 @@ class DecisionTreeGiniIndex:
             subset_y = y[subset_indices]
             subset_gini += (len(subset_y) / len(y)) * self.gini_index(subset_y, value, threshold=threshold)
 
+        step_b = "Gini " + self.attribute_name_dict.get(attribute) + ": " + str(round(subset_gini, 2))
+        self.step.append(step_b)
+
         return subset_gini
 
     def choose_best_attribute(self, X, y, used_attributes):
